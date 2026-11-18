@@ -2,7 +2,7 @@
 
 本项目计划用 Java 和 Spring Boot 汇总多个 AI 应用的评测运行、模型调用用量与人工复核记录。首批接入对象是 `qa-system` 和 AI 求职助手：两个项目各自保留业务逻辑，由本项目接收统一格式的结果，便于比较模型或提示词调整前后的表现。
 
-> 当前状态（2026-11-18）：仓库刚创建，只有 Java 17 的 Maven 初始工程和 IntelliJ 生成的 `Main.java`。下文“规划”均尚未实现；目前没有 Spring Boot 服务、数据库表、HTTP 接口、跨项目联调或评测结果。
+> 当前状态（2026-11-18）：Java 17 Maven 初始工程已构建并运行；两个原项目已完成只读文件调研。本仓库没有 Spring Boot 服务、数据库表、HTTP 接口、跨项目联调或评测结果。下文第一至第六阶段均为规划。
 
 ## 一眼看懂项目目标
 
@@ -21,7 +21,7 @@ AI 求职助手 ───────┘                              ├→ 用
 
 | 阶段 | 目标 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
-| 初始工程 | 建立 Java 17 Maven 仓库 | 确认初始骨架可构建 | 已有骨架；构建待验证 |
+| 初始工程 | 建立 Java 17 Maven 仓库 | 确认初始骨架可构建 | 已完成：离线打包及主入口运行成功 |
 | 第一阶段 | Spring Boot 服务、MySQL 迁移和评测运行基础表 | 服务可启动，空库可迁移，运行记录可写入和查询 | 待实现 |
 | 第二阶段 | 统一结果格式，导入 qa-system 已有评测报告 | 一份真实报告可导入、去重和追溯来源；测试覆盖重复导入 | 待实现 |
 | 第三阶段 | 同案例集的版本对比、失败分类和人工复核 | 能查看新增失败项并保存审核结论；不混合不同分母的指标 | 待实现 |
@@ -57,14 +57,38 @@ AI 求职助手 ───────┘                              ├→ 用
 ## 当前目录与运行方式
 
 ```text
-pom.xml                         Java 17 Maven 初始配置，尚无 Spring Boot 依赖
-src/main/java/org/example/Main.java  IntelliJ 初始 Hello World 入口
-.gitignore                      IDE 与构建产物忽略规则
+pom.xml                                  Java 17 Maven 构建配置，无业务依赖
+src/main/java/dev/llmevalhub/Main.java  初始命令行入口
+.gitignore                               IDE、构建产物和本地环境文件忽略规则
+docs/初始工程与现有评测调研.md            两个原项目的只读文件调研
 ```
 
-当前可在 IntelliJ IDEA 中运行 `org.example.Main`，它只输出初始示例文字。仓库尚无 Web 服务启动命令、`/health`、数据库配置或容器配置。后续加入 Spring Boot 时，本节将改为实际安装、配置、迁移、启动和测试命令。
+安装 JDK 17 和 Maven 3.9.16，在 PowerShell 中从仓库根目录执行：
+
+```powershell
+mvn -B package
+mvn -B exec:java
+```
+
+也可在打包后直接运行 `java -cp target\llm-eval-hub-0.1.0-SNAPSHOT.jar dev.llmevalhub.Main`。入口只打印 `LLM Eval Hub initial project is running.`；它不是 Web 服务。本轮未加入 Maven Wrapper：本机已有 Maven 3.9.16，固定的插件版本可离线复现，添加 Wrapper 会引入额外的 Maven 分发下载。仓库尚无 `/health`、数据库或容器配置。
+
+本机默认 `java` 启动器没有正常返回；实际验证显式选择 `E:\java17`，使用以下命令（其他机器将路径换为自己的 JDK 17 安装位置）：
+
+```powershell
+$env:JAVA_HOME = 'E:\java17'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+mvn -version
+mvn -o -B package
+mvn -o -B exec:java
+```
+
+`-o` 使用已有本地 Maven 缓存；首次安装所需插件时去掉它。验证环境为 Oracle JDK 17.0.12、Apache Maven 3.9.16、Windows 11；打包生成 `target/llm-eval-hub-0.1.0-SNAPSHOT.jar`，主入口输出上述文字，两条 Maven 命令均为 `BUILD SUCCESS`。当前没有业务测试，因此本轮仅验证骨架编译、打包和运行。
+
+## 现有项目调研索引
+
+两个原项目的案例、脚本、报告字段、模型客户端和文档声明的验证范围见[初始工程与现有评测调研](docs/初始工程与现有评测调研.md)。`qa-system` 已有固定小样本真实模型预测和评分报告，但缺少可用于费用核算的落盘 token/价格数据；AI 求职助手已有 20 个虚构案例和离线规则结果，但真实模型评估、人工语义复核及持久化评估报告尚未完成。这些只是未来接入的文件依据，本仓库尚未采集或导入任何结果。
 
 ## 验证范围与下一步
 
-本 README 依据当前文件结构编写；尚未在本轮验证 Maven 构建，也没有运行任何业务测试。下一步先确定第一阶段的最小数据模型和接口契约，再让一个现有项目提交一条可追溯的虚构评测记录。接入真实模型前应确认用量字段、价格版本和数据发送范围；不把模拟记录写成真实模型费用或质量结果。
+本轮仅验证初始工程的编译、打包和命令行入口，并只读检查两个原项目的文件；没有运行原项目评测脚本或真实模型，也没有业务测试、服务联调或数据导入。第一至第六阶段仍待实现。
 
