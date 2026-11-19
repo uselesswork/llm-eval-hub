@@ -44,7 +44,10 @@ public class EvalRunController {
     @GetMapping
     public List<EvalRunResponse> list(
             @RequestParam(required = false) @Pattern(regexp = "[A-Za-z0-9_-]{1,64}") String sourceProject,
+            @RequestParam(required = false) String datasetVersion,
+            @RequestParam(required = false) String modelId,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit) {
-        return service.findRecent(sourceProject, limit).stream().map(EvalRunResponse::from).toList();
+        return service.findRecent(sourceProject, datasetVersion, modelId, limit)
+                .stream().map(EvalRunResponse::from).toList();
     }
 }

@@ -38,7 +38,8 @@ public class EvalRunService {
     }
 
     @Transactional(readOnly = true)
-    public List<EvalRun> findRecent(String sourceProject, int limit) {
-        return mapper.findRecent(sourceProject, limit);
+    public List<EvalRun> findRecent(String sourceProject, String datasetVersion,
+            String modelId, int limit) {
+        return mapper.findRecent(sourceProject, datasetVersion, modelId, limit);
     }
 }

@@ -56,9 +56,13 @@ public interface EvalRunMapper {
             FROM eval_runs
             <where>
               <if test='sourceProject != null'>source_project = #{sourceProject}</if>
+              <if test='datasetVersion != null'>AND dataset_version = #{datasetVersion}</if>
+              <if test='modelId != null'>AND model_id = #{modelId}</if>
             </where>
             ORDER BY created_at DESC, id DESC LIMIT #{limit}
             </script>
             """)
-    List<EvalRun> findRecent(@Param("sourceProject") String sourceProject, @Param("limit") int limit);
+    List<EvalRun> findRecent(@Param("sourceProject") String sourceProject,
+            @Param("datasetVersion") String datasetVersion,
+            @Param("modelId") String modelId, @Param("limit") int limit);
 }
