@@ -2,7 +2,7 @@
 
 本项目计划用 Java 和 Spring Boot 汇总多个 AI 应用的评测运行、模型调用用量与人工复核记录。首批接入对象是 `qa-system` 和 AI 求职助手：两个项目各自保留业务逻辑，由本项目接收统一格式的结果，便于比较模型或提示词调整前后的表现。
 
-> 当前状态（2026-11-18）：Java 17 Maven 初始工程已构建并运行；两个原项目已完成只读文件调研。本仓库没有 Spring Boot 服务、数据库表、HTTP 接口、跨项目联调或评测结果。下文第一至第六阶段均为规划。
+> 当前状态（2026-11-19）：第一阶段已加入 Spring Boot 4.1.2 服务、MySQL 迁移和评测运行元数据 API；实际验证范围见[第一阶段说明](docs/第一阶段-服务与评测运行.md)。两个原项目尚未接入，没有真实模型评测结果导入。
 
 ## 一眼看懂项目目标
 
@@ -22,7 +22,7 @@ AI 求职助手 ───────┘                              ├→ 用
 | 阶段 | 目标 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
 | 初始工程 | 建立 Java 17 Maven 仓库 | 确认初始骨架可构建 | 已完成：离线打包及主入口运行成功 |
-| 第一阶段 | Spring Boot 服务、MySQL 迁移和评测运行基础表 | 服务可启动，空库可迁移，运行记录可写入和查询 | 待实现 |
+| 第一阶段 | Spring Boot 服务、MySQL 迁移和评测运行基础表 | 服务可启动，空库可迁移，运行记录可写入和查询 | 已实现；验证范围见[阶段说明](docs/第一阶段-服务与评测运行.md) |
 | 第二阶段 | 统一结果格式，导入 qa-system 已有评测报告 | 一份真实报告可导入、去重和追溯来源；测试覆盖重复导入 | 待实现 |
 | 第三阶段 | 同案例集的版本对比、失败分类和人工复核 | 能查看新增失败项并保存审核结论；不混合不同分母的指标 | 待实现 |
 | 第四阶段 | 模型调用用量与费用核算 | 有真实 token 用量和价格版本时可核算；缺失数据明确标记 | 待实现 |
@@ -37,7 +37,7 @@ AI 求职助手 ───────┘                              ├→ 用
 
 ## 规划的技术栈与边界
 
-- **首版核心**：Java 17、Spring Boot、Spring MVC、MyBatis、MySQL、数据库迁移、JUnit 与 Testcontainers。具体依赖以提交后的 `pom.xml` 为准；当前 `pom.xml` 还没有这些依赖。
+- **当前核心**：Java 17、Spring Boot、Spring MVC、MyBatis、MySQL、Flyway 和 JUnit。具体依赖以 `pom.xml` 为准；Testcontainers 尚未加入。
 - **跨项目接入**：约定统一的运行 ID、项目来源、案例集版本、模型标识、指标定义和结果来源。上报接口需处理重复提交与版本兼容，原项目可通过 HTTP 客户端或报告导入接入。
 - **费用核算**：只在取得供应商返回的 token 用量和已记录的价格版本时计算；缺少用量或价格时明确标记“无法计算”，不按字符数猜测实际费用。
 - **按需扩展**：只有出现缓存、限流或异步批量处理的实测需求，再评估 Redis、任务队列等组件。首版不预设微服务拆分。
@@ -45,32 +45,35 @@ AI 求职助手 ───────┘                              ├→ 用
 
 ## 规划的数据与接口
 
-以下是设计方向，**目前尚无可调用接口**：
+第一项的评测运行元数据写入与查询已在第一阶段实现；其余仍是设计方向：
 
-1. 保存评测运行：来源项目、运行时间、模型与提示词版本、案例集版本、执行模式和整体状态。
+1. 已实现保存和查询评测运行元数据：来源项目、运行标签/时间、可空模型和提示词版本、案例集版本、结果来源和状态。
 2. 保存逐例结果：案例 ID、检查项、通过状态、失败分类、人工复核状态及结论。
 3. 保存调用用量：请求关联 ID、耗时、输入/输出 token、价格版本和可核算费用。
 4. 查询与对比：按项目、模型、版本筛选两次运行，分别展示相同定义下的指标与新增失败案例。
 
-同名指标也可能使用不同样本或分母；对比前需核对指标定义和案例集版本。接口路径、表结构及权限方案在实现阶段确定。
+同名指标也可能使用不同样本或分母；对比前需核对指标定义和案例集版本。当前接口及表见[第一阶段说明](docs/第一阶段-服务与评测运行.md)；后续接口、表结构及权限方案在对应阶段确定。
 
 ## 当前目录与运行方式
 
 ```text
-pom.xml                                  Java 17 Maven 构建配置，无业务依赖
-src/main/java/dev/llmevalhub/Main.java  初始命令行入口
+pom.xml                                  Java 17 Spring Boot Maven 配置
+src/main/java/dev/llmevalhub/Main.java  Web 服务主入口
+src/main/java/dev/llmevalhub/run/        评测运行 API、事务与 MyBatis Mapper
+src/main/resources/db/migration/         Flyway 数据库迁移
 .gitignore                               IDE、构建产物和本地环境文件忽略规则
 docs/初始工程与现有评测调研.md            两个原项目的只读文件调研
+docs/第一阶段-服务与评测运行.md           第一阶段接口、配置、测试与限制
 ```
 
-安装 JDK 17 和 Maven 3.9.16，在 PowerShell 中从仓库根目录执行：
+安装 JDK 17、Maven 3.9.16 和 MySQL 8，创建空库和专用账号，并在 PowerShell 中从仓库根目录设置 `DB_URL`、`DB_USER`、`DB_PASSWORD`。具体权限和示例见[第一阶段说明](docs/第一阶段-服务与评测运行.md)。运行：
 
 ```powershell
 mvn -B package
-mvn -B exec:java
+java -jar target\llm-eval-hub-0.1.0-SNAPSHOT.jar
 ```
 
-也可在打包后直接运行 `java -cp target\llm-eval-hub-0.1.0-SNAPSHOT.jar dev.llmevalhub.Main`。入口只打印 `LLM Eval Hub initial project is running.`；它不是 Web 服务。本轮未加入 Maven Wrapper：本机已有 Maven 3.9.16，固定的插件版本可离线复现，添加 Wrapper 会引入额外的 Maven 分发下载。仓库尚无 `/health`、数据库或容器配置。
+应用默认监听 `127.0.0.1:8080`，提供 `GET /health`、`POST /api/runs`、`GET /api/runs/{id}` 和 `GET /api/runs`。数据库迁移在启动时执行。仓库没有真实密码或容器配置。
 
 本机默认 `java` 启动器没有正常返回；实际验证显式选择 `E:\java17`，使用以下命令（其他机器将路径换为自己的 JDK 17 安装位置）：
 
@@ -78,11 +81,11 @@ mvn -B exec:java
 $env:JAVA_HOME = 'E:\java17'
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 mvn -version
-mvn -o -B package
-mvn -o -B exec:java
+mvn -B package
+java -jar target\llm-eval-hub-0.1.0-SNAPSHOT.jar
 ```
 
-`-o` 使用已有本地 Maven 缓存；首次安装所需插件时去掉它。验证环境为 Oracle JDK 17.0.12、Apache Maven 3.9.16、Windows 11；打包生成 `target/llm-eval-hub-0.1.0-SNAPSHOT.jar`，主入口输出上述文字，两条 Maven 命令均为 `BUILD SUCCESS`。当前没有业务测试，因此本轮仅验证骨架编译、打包和运行。
+本机 JDK 为 Oracle 17.0.12，Maven 为 3.9.16。第一阶段具体构建、测试与数据库验证结果以[阶段说明](docs/第一阶段-服务与评测运行.md)为准；上面的环境变量路径仅适用于本机。
 
 ## 现有项目调研索引
 
@@ -90,5 +93,5 @@ mvn -o -B exec:java
 
 ## 验证范围与下一步
 
-本轮仅验证初始工程的编译、打包和命令行入口，并只读检查两个原项目的文件；没有运行原项目评测脚本或真实模型，也没有业务测试、服务联调或数据导入。第一至第六阶段仍待实现。
+第一阶段的验证范围和限制见[阶段说明](docs/第一阶段-服务与评测运行.md)。第二至第六阶段仍待实现；没有运行原项目评测脚本或真实模型，也没有导入评测报告。
 

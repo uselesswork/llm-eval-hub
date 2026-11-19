@@ -1,10 +1,14 @@
 package dev.llmevalhub;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public final class Main {
     private Main() {
     }
 
     public static void main(String[] args) {
-        System.out.println("LLM Eval Hub initial project is running.");
+        SpringApplication.run(Main.class, args);
     }
 }
