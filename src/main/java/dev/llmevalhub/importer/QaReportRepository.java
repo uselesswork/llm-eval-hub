@@ -48,7 +48,7 @@ public class QaReportRepository {
         requireOne(rows, "评测运行");
     }
 
-    public void insertReport(String runId, String reportFilename, QaReportDocument report) {
+    void insertReport(String runId, String reportFilename, QaReportDocument report) {
         int rows = jdbc.update("""
                 INSERT INTO qa_report_imports (run_id, report_filename, dataset_sha256,
                     predictions_sha256, predictions_filename, source_created_at, python_version,

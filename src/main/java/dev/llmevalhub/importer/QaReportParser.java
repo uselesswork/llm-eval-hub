@@ -28,7 +28,7 @@ public class QaReportParser {
         this.mapper = mapper;
     }
 
-    public QaReportDocument parse(byte[] bytes) {
+    QaReportDocument parse(byte[] bytes) {
         if (bytes == null || bytes.length == 0 || bytes.length > MAX_REPORT_BYTES) {
             throw invalid("报告必须是 1 字节到 2 MiB 的 JSON 文件");
         }
@@ -119,10 +119,10 @@ public class QaReportParser {
                 ratioMetric(root, "citation_precision", "qa.citation_precision", "ANSWERABLE", answerableCount),
                 ratioMetric(root, "refusal_accuracy", "qa.refusal_accuracy", "REFUSAL", refusalCount),
                 ratioMetric(root, "answer_contains_accuracy", "qa.answer_contains_accuracy", "ANSWERABLE", answerableCount),
-                aggregate(root, "latency_p50_ms", "qa.latency_p50_ms", "P50", "ALL", sampleCount, "MILLISECONDS"),
-                aggregate(root, "latency_p95_ms", "qa.latency_p95_ms", "P95", "ALL", sampleCount, "MILLISECONDS"),
-                aggregate(root, "model_calls_total", "qa.model_calls_total", "SUM", "ALL", sampleCount, "CALLS"),
-                aggregate(root, "model_calls_mean", "qa.model_calls_mean", "MEAN", "ALL", sampleCount, "CALLS_PER_CASE")
+                aggregate(root, "latency_p50_ms", "qa.latency_p50_ms", "P50", sampleCount, "MILLISECONDS"),
+                aggregate(root, "latency_p95_ms", "qa.latency_p95_ms", "P95", sampleCount, "MILLISECONDS"),
+                aggregate(root, "model_calls_total", "qa.model_calls_total", "SUM", sampleCount, "CALLS"),
+                aggregate(root, "model_calls_mean", "qa.model_calls_mean", "MEAN", sampleCount, "CALLS_PER_CASE")
         );
         return new QaReportDocument(label, createdAt, pythonVersion, datasetSha,
                 predictionsSha, predictionsFilename, Map.copyOf(corpusHashes), k,
@@ -168,10 +168,10 @@ public class QaReportParser {
 
     private static QaReportResultsResponse.AggregateMetric aggregate(
             JsonNode root, String sourceKey, String key, String aggregation,
-            String scope, int denominator, String unit) {
+            int denominator, String unit) {
         BigDecimal value = nonnegativeDecimal(root, sourceKey);
         return new QaReportResultsResponse.AggregateMetric(key, DEFINITION_VERSION,
-                aggregation, scope, denominator, unit, normalized(value));
+                aggregation, "ALL", denominator, unit, normalized(value));
     }
 
     private static QaReportResultsResponse.CaseMetric booleanMetric(String key, boolean value) {
