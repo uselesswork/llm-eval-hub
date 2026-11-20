@@ -96,6 +96,29 @@ export interface Comparison {
   }>
 }
 
+export interface RunUsage {
+  runId: string
+  callCount: number
+  pricedCallCount: number
+  inputTokens: number | null
+  outputTokens: number | null
+  currency: string | null
+  totalCost: string | null
+  status: 'NO_CALLS' | 'INCOMPLETE' | 'MIXED_CURRENCY' | 'CALCULATED'
+  calls: Array<{
+    id: string
+    requestId: string
+    modelId: string
+    latencyMs: number | null
+    inputTokens: number | null
+    outputTokens: number | null
+    priceVersion: string | null
+    currency: string | null
+    cost: string | null
+    status: 'MISSING_USAGE' | 'MISSING_PRICE' | 'CALCULATED'
+  }>
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
@@ -122,6 +145,9 @@ export const api = {
   },
   results(id: string) {
     return request<RunResults>(`/api/runs/${encodeURIComponent(id)}/results`)
+  },
+  usage(id: string) {
+    return request<RunUsage>(`/api/runs/${encodeURIComponent(id)}/usage`)
   },
   classifications(id: string) {
     return request<CaseFailures[]>(`/api/runs/${encodeURIComponent(id)}/classifications`)
