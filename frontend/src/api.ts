@@ -119,6 +119,16 @@ export interface RunUsage {
   }>
 }
 
+export interface JobResults {
+  run: EvalRun
+  sourceRunId: string
+  reportSha256: string
+  sampleCount: number
+  passedCount: number
+  cases: Array<{ id: string; task: 'resume' | 'job' | 'match'; passed: boolean;
+    checks: Array<{ name: string; passed: boolean }> }>
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
@@ -148,6 +158,9 @@ export const api = {
   },
   usage(id: string) {
     return request<RunUsage>(`/api/runs/${encodeURIComponent(id)}/usage`)
+  },
+  jobResults(id: string) {
+    return request<JobResults>(`/api/runs/${encodeURIComponent(id)}/job-results`)
   },
   classifications(id: string) {
     return request<CaseFailures[]>(`/api/runs/${encodeURIComponent(id)}/classifications`)
