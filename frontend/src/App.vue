@@ -208,7 +208,18 @@ async function saveReview() {
   }
 }
 
-onMounted(loadRuns)
+onMounted(async () => {
+  await loadRuns()
+  const params = new URLSearchParams(window.location.search)
+  const baseline = params.get('baselineId')
+  const candidate = params.get('candidateId')
+  if (baseline && candidate) {
+    baselineId.value = baseline
+    candidateId.value = candidate
+    view.value = 'compare'
+    await compareRuns()
+  }
+})
 </script>
 
 <template>
@@ -225,7 +236,7 @@ onMounted(loadRuns)
         <button :class="{ active: view === 'job' }" @click="view = 'job'"><span>▤</span> 求职评测</button>
       </nav>
       <div class="side-note"><span class="status-dot"></span><span>数据来自当前连接的后端<br />不生成模拟评测记录</span></div>
-      <div class="side-footer">阶段 05 <span>·</span> 双项目评测</div>
+      <div class="side-footer">阶段 06 <span>·</span> 隔离演示</div>
     </aside>
 
     <main class="main-panel">
@@ -233,7 +244,7 @@ onMounted(loadRuns)
       <div class="content">
         <section class="page-heading">
           <div><p class="eyebrow">EVALUATION WORKSPACE</p><h1>{{ view === 'runs' ? '评测运行' : view === 'results' ? '逐例结果' : view === 'compare' ? '同口径版本对比' : view === 'usage' ? '调用用量' : view === 'job' ? '求职助手规则结果' : '人工复核' }}</h1><p class="subtitle">{{ view === 'runs' ? '查找已记录的运行，进入报告详情与人工复核。' : view === 'results' ? '查看报告中的原始检查值与自动失败分类。' : view === 'compare' ? '只对案例集、结果来源与指标定义一致的运行计算差异。' : view === 'usage' ? '查看已登记的调用 token、价格版本和费用状态。' : view === 'job' ? '逐例查看求职助手规则检查，离线夹具结果不代表真实模型质量。' : '为单个案例记录人工结论；自动检查与人工结论分别展示。' }}</p></div>
-          <span class="stage-pill">第五阶段 · 本地版</span>
+          <span class="stage-pill">第六阶段 · 本地版</span>
         </section>
 
         <template v-if="view === 'runs'">

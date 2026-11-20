@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.mvn/repository
+target/*
+!target/llm-eval-hub-0.1.0-SNAPSHOT.jar
+frontend
+docs
+.env
+.env.*
